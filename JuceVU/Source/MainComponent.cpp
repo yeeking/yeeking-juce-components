@@ -11,8 +11,6 @@
 //==============================================================================
 MainComponent::MainComponent()
 {
-    // Make sure you set the size of the component after
-    // you add any child components.
     setSize (800, 100);
 
     // Some platforms require permissions to open input channels so request that here
@@ -56,10 +54,7 @@ void MainComponent::releaseResources()
 //==============================================================================
 void MainComponent::paint (Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    //g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 
-    // You can add your drawing code here!
 }
 
 void MainComponent::resized()
