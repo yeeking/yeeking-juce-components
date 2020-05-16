@@ -9,13 +9,14 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include "YeekingOscilloscope.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent   : public AudioAppComponent, public Timer
+class MainComponent   : public AudioAppComponent
 {
 public:
     //==============================================================================
@@ -31,14 +32,9 @@ public:
     void paint (Graphics& g) override;
     void resized() override;
 
-    void timerCallback() override;
-
 private:
     //==============================================================================
     // Your private member variables go here...
-    AudioBuffer< float >* plotBuffer;
-    bool painting; 
-    
-
+    YeekingOscilloscope oscilloscope;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

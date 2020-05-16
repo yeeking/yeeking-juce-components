@@ -3,6 +3,8 @@
 <JUCERPROJECT id="NRDUhM" name="JuceOsci" projectType="guiapp" jucerVersion="5.4.5">
   <MAINGROUP id="uXwRKi" name="JuceOsci">
     <GROUP id="{8E385154-E2D9-A7A3-49FA-FCEC0CB66624}" name="Source">
+      <FILE id="NcfX4g" name="YeekingOscilloscope.h" compile="1" resource="0"
+            file="Source/YeekingOscilloscope.h"/>
       <FILE id="Vubi1N" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="uMtKwO" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
