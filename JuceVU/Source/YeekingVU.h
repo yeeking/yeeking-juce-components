@@ -55,11 +55,9 @@ public:
             float total = 0.0f;
             int step = 64;
             auto reader = bufferToFill.buffer->getReadPointer(0, bufferToFill.startSample);
-            float sample; 
             for (auto i=0; i < bufferToFill.numSamples ; i+=step)
             {
-                sample = reader[i];
-                total +=  fabs(sample); 
+                total +=  fabs(reader[i]); 
             }
             total = total / (bufferToFill.numSamples / step);
             meanDB = Decibels::gainToDecibels(total);
