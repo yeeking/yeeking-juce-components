@@ -50,6 +50,65 @@ bool testTick2()
   return true;
 }
 
+bool testCursorStart()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  // should be 0
+  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 0)
+  return true;
+  else return false; 
+}
+bool testCursorRight()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.moveCursorRight();
+  // should be at step 1
+  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 1)
+  return true;
+  else return false; 
+}
+bool testCursorRightLimit()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  for (int i=0;i<1000;++i) cursor.moveCursorRight();
+  // should be at step seqr.numbersteps
+  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == seqr.howManySteps(0)-1)
+  return true;
+  else return false; 
+}
+
+bool testCursorLeftLimit()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.moveCursorLeft();
+  cursor.moveCursorLeft();
+  cursor.moveCursorLeft();
+  
+  // should be at step 0
+  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 0)
+  return true;
+  else return false; 
+}
+
+bool testCursorLeft()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  // 10 to the right then 1 to the left
+  // should be at 9
+  for (int i=0;i<10;i++) cursor.moveCursorRight();
+  cursor.moveCursorLeft();
+  // should be at step 1
+  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 9)
+  return true;
+  else return false; 
+}
+
+
 void log(std::string test, bool res)
 {
   std::string msg;
@@ -60,9 +119,23 @@ void log(std::string test, bool res)
 
 int main()
 {
-  log("testTick", testTick());
-  log("testTick2", testTick2());
-  log("testUpdate", testUpdate());
-  log("testUpdate2", testUpdate2());
-  log("testToString", testToString());
+  // log("testTick", testTick());
+  // log("testTick2", testTick2());
+  // log("testUpdate", testUpdate());
+  // log("testUpdate2", testUpdate2());
+  // log("testToString", testToString());
+
+  // log("testCursorStart", testCursorStart());
+  // log("testCursorLeft", testCursorLeft());
+  // log("testCursorLeftLimit", testCursorLeftLimit());
+  // log("testCursorRight", testCursorRight());
+  // log("testCursorRightLimit", testCursorRightLimit());
+  
+  SimpleClock clock;
+  clock.start(1000);
+  std::string s;
+  std::cout << "Enter something " << std::endl;
+  std::cin >> s;
+  clock.stop();
+
 }
