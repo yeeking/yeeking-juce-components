@@ -16,12 +16,14 @@ class SimpleClock
 {
 
   public:
-    SimpleClock() : sleepTimeMs{5}, running{false}, callback{
-      [](){
-          std::cout << "SimpleClock::default tick callback" << std::endl;
-      }
-     } 
-     {}
+    SimpleClock(int sleepTimeMs = 5, 
+                std::function<void()>callback = [](){
+                    std::cout << "SimpleClock::default tick callback" << std::endl;
+                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}
+     {
+       // constructor body
+     }
+
     ~SimpleClock()
     {
       stop();
@@ -39,7 +41,7 @@ class SimpleClock
     {
       if (running)
       {
-        std::cout << "SimpleClock::stop shutting down " << std::endl;
+       //t << "SimpleClock::stop shutting down " << std::endl;
         running = false; 
         tickThread->join(); 
         delete tickThread;
@@ -52,7 +54,7 @@ class SimpleClock
     void tick()
     {
       // call the callback
-      std::cout << "SimpleClock::tick" << std::endl; 
+      //std::cout << "SimpleClock::tick" << std::endl; 
       callback();     
     }
 
@@ -70,7 +72,7 @@ class SimpleClock
         { 
           // move the start time along
           startTimeMs = nowMs;
-          std::cout << "SimpleClock::ticker elapsed time  " << elapsedMs << " of " << intervalMs << std::endl;
+          //std::cout << "SimpleClock::ticker elapsed time  " << elapsedMs << " of " << intervalMs << std::endl;
           clock->tick();
         }
         else {
