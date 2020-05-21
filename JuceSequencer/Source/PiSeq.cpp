@@ -4,22 +4,29 @@
 #include "Sequencer.h"
 #include "grovepi.h"
 
-// class for converting getting shit from the joystick on A0
+/** utilities to make use of the Grove LCD RGB widget */
+class GroveLCD{
+    public:
 
+};
+
+/** used to transmit joystick states*/
 enum class JoystickEvent{up, down, left, right, click};
-
-
-
+/**
+ *  Talks to the Grove Joystick widget 
+ * https://wiki.seeedstudio.com/Grove-Thumb_Joystick/
+ * Based on https://dexterind.github.io/GrovePi
+ */
 class GroveJoystick
 {
     public:
-    GroveJoystick(std::function<void(JoystickEvent)> callback) : callback{callback}, pinX{0}, pinY{1}   
+    GroveJoystick(int _pinX=0, int _pinY=1, std::function<void(JoystickEvent)> callback = [](JoystickEvent e){printf("%d", e)}) : callback{callback}, pinX{_pinX}, pinY{_pinY}   
     {
         try
         {
             GrovePi::initGrovePi(); 
-            GrovePi::pinMode(0, GrovePi::INPUT);
-            GrovePi::pinMode(1, GrovePi::INPUT);
+            GrovePi::pinMode(pinX, GrovePi::INPUT);
+            GrovePi::pinMode(pinY, GrovePi::INPUT);
             poller.start(10);
         }catch (GrovePi::I2CError &error)
         {
@@ -71,11 +78,6 @@ class GroveJoystick
             }
             return;
         }
-
-
-
-
-
     }
     
     private:
@@ -113,25 +115,29 @@ class PiSeq
 int main()
 {
     Sequencer seqr;
-    GroveJoystick joy([](JoystickEvent event){
+    SequencerEditor seqEditor{&seqr};
+    GroveJoystick joy([&seqEditor](JoystickEvent event){
         switch (event)
         {
             case JoystickEvent::up:
-                std::cout << "Received jpystick event up" << std::endl;
+                //std::cout << "Received jpystick event up" << std::endl;
+                seqEditor.moveCursorUp();
                 break;
             case JoystickEvent::down:
-                std::cout << "Received jpystick event down" << std::endl;
+                //std::cout << "Received jpystick event down" << std::endl;
+                seqEditor.moveCursorDown();
                 break;
             case JoystickEvent::left:
-                std::cout << "Received jpystick event left" << std::endl;
+                //std::cout << "Received jpystick event left" << std::endl;
+                seqEditor.moveCursorLeft();              
                 break;
             case JoystickEvent::right:
-                std::cout << "Received jpystick event right " << std::endl;
+                //std::cout << "Received jpystick event right " << std::endl;
+                seqEditor.moveCursorRight();
                 break;
             case JoystickEvent::click:
                 std::cout << "Received jpystick event click " << std::endl;
-                break;
-            
+                break;   
         }
     });
     int x;

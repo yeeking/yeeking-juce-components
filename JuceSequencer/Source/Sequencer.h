@@ -124,9 +124,9 @@ class Step{
 
 class Sequence{
   public:
-    Sequence() : currentStep{0}, currentLength{16}
+    Sequence(unsigned int seqLength = 16) : currentStep{0}, currentLength{seqLength}
     {
-      for (auto i=0;i<128;i++)
+      for (auto i=0;i<seqLength;i++)
       {
         steps.push_back(Step{});
       }
@@ -137,19 +137,38 @@ class Sequence{
     {
       currentStep = (++currentStep) % currentLength;
     }
-    bool assertStep(unsigned int step)
+    unsigned int getCurrentStep() const
+    {
+      return currentStep; 
+    }
+
+    bool assertStep(unsigned int step) const
     {
       if (step >= steps.size() || step < 0) return false;
       return true; 
     }
 
-    std::vector<float> getStepData(int step)
+    std::vector<float> getStepData(int step) const
     {
       return steps[step].getData();
     }
-    std::vector<float> getCurrentStepData()
+    std::vector<float> getCurrentStepData() const
     {
       return steps[currentStep].getData();
+    }
+
+    void setLength(int length)
+    {
+      if (length > steps.size()) // bad need more steps
+      {
+        int toAdd = length - steps.size();
+
+        for (int i=0; i < toAdd; ++i)
+        {
+          steps.push_back(Step{});
+        }
+      }
+      currentLength = length;
     }
 
     void setStepData(unsigned int step, std::vector<float> data)
@@ -157,7 +176,7 @@ class Sequence{
       steps[step].setData(data);
     }
 
-    std::string stepToString(int step)
+    std::string stepToString(int step) const
     {
       std::vector<float> data = getStepData(step);
       return std::to_string(data[0]);
@@ -169,8 +188,8 @@ class Sequence{
     }
 
   private:
-    int currentLength;
-    int currentStep;
+    unsigned int currentLength;
+    unsigned int currentStep;
     std::vector<Step> steps;
 
 };
@@ -178,14 +197,13 @@ class Sequence{
 /** represents a sequencer which is used to store a grid of data and to step through it */
 class Sequencer  {
     public:
-      Sequencer()
+      Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16) 
       {
-        for (auto i=0;i<4;i++)
+        for (auto i=0;i<seqCount;++i)
         {
-          sequences.push_back(Sequence{});
+          sequences.push_back(Sequence{seqLength});
         }
       }
-
 
       unsigned int howManySequences() const 
       {
@@ -195,6 +213,10 @@ class Sequencer  {
       {
         if (assertSequence(sequence)) return sequences[sequence].howManySteps();
         else return 0;
+      }
+      unsigned int getCurrentStep(unsigned int sequence) const
+      {
+        return sequences[sequence].getCurrentStep();
       }
 
       /** move the sequencer along by one tick */
@@ -206,6 +228,12 @@ class Sequencer  {
             seq.tick();
         }
       }
+
+      void setSequenceLength(unsigned int sequence, unsigned int length)
+      {
+        sequences[sequence].setLength(length);
+      }
+
       /** update the data stored at a step in the sequencer */
       void setStepData(unsigned int sequence, unsigned int step, std::vector<float> data)
       {
@@ -213,13 +241,13 @@ class Sequencer  {
         sequences[sequence].setStepData(step, data);
       }
       /** retrieve the data for the current step */
-      std::vector<float> getCurrentStepData(int sequence)
+      std::vector<float> getCurrentStepData(int sequence) const
       {
         if (sequence >= sequences.size() || sequence < 0) return std::vector<float>{};
         return sequences[sequence].getCurrentStepData();
       }
       /** retrieve the data for a specific step */
-      std::vector<float> getStepData(int sequence, int step)
+      std::vector<float> getStepData(int sequence, int step) const
       {
         if (!assertSeqAndStep(sequence, step)) return std::vector<float>{};
         return sequences[sequence].getStepData(step);
@@ -245,7 +273,7 @@ class Sequencer  {
 
     private:
 
-    bool assertSeqAndStep(unsigned int sequence, unsigned int step)
+    bool assertSeqAndStep(unsigned int sequence, unsigned int step) const
       {
         if (!assertSequence(sequence)) return false;
         if (!sequences[sequence].assertStep(step)) return false; 
@@ -280,10 +308,10 @@ class SequencerEditor {
 
     }
 
-  void setEditMode(SequencerEditorMode mode)
-  {
-    this->editMode = mode;
-  }
+    void setEditMode(SequencerEditorMode mode)
+    {
+      this->editMode = mode;
+    }
 
   /** moves the editor cursor up. 
    * If in selectingStep mode, steps through the sequenbces, wrapping at the top
@@ -354,7 +382,63 @@ class SequencerEditor {
     float stepIncrement;    
 };
 
-
+/** Provides functions to 
+ * 
+*/
+class SequencerViewer{
+  public:
+    SequencerViewer()
+    {}
+    /** generate a 'rows' line string representation of the state of the editor
+     * and sequencer. Examples:
+     * Starting state - I is where the 
+     * 1-Iooooooo
+     * 2-Oooooooo
+     */
+    static std::string toTextDisplay(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    {
+      // the editor cursor dictates which bit we show
+      std::string disp{""};
+      // we display the bit of the sequences
+      // that the editor is looking at
+      int seqOffset = editor->getCurrentSequence();
+      int stepOffset = editor->getCurrentStep();
+      int displaySeq, displayStep;
+      for (int seq=0;seq<rows;++seq)
+      {
+        displaySeq = seq + seqOffset;
+        // the first thing is the channel number
+        disp += std::to_string(displaySeq + 1);
+        // space pad it
+        if (displaySeq < 10) disp += " ";
+        // the second thing is a '-' if this is the start of the 
+        // sequence or a ' ' if it is not, based on the 
+        // position of the cursor
+        if (editor->getCurrentStep() == 0) disp += "-";
+        else disp += " ";
+        for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
+        {
+          displayStep = step + stepOffset;
+          
+          // three choices, in order of priority as two can be true:
+          // I : the editor is at this step
+          // O : the sequencer is at this step 
+          // o : neither the editor or sequencer are at step
+          //   : gone past the end of the sequence
+          char state{'o'};// default
+          if (sequencer->getCurrentStep(displaySeq) == displayStep) state = 'O';
+          if (editor->getCurrentSequence() == displaySeq &&
+              editor->getCurrentStep() == displayStep)  state = 'I';          
+          if (sequencer->howManySteps(displaySeq) <= displayStep) state = ' ';
+          disp += state;
+        }
+        if (seq < rows - 1)
+          disp += "\n";
+      } 
+      
+      return disp;
+    }
+}; 
 
 
 

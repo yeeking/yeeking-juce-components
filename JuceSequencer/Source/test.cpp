@@ -109,6 +109,153 @@ bool testCursorLeft()
 }
 
 
+bool testTwoLinesInit()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  std::string want = "1 -Ioooo\n2 -Ooooo";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testTwoLines16()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  std::string want = "1 -Ioooooooooooo\n2 -Ooooooooooooo";
+  std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testTwoLines16Tick()
+{
+  Sequencer seqr{};
+  seqr.tick();
+  SequencerEditor cursor{&seqr};
+  std::string want = "1 -IOooooooooooo\n2 -oOooooooooooo";
+  std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testTwoLinesWrapSeq()
+{
+  Sequencer seqr{};
+  // set seq lengths to 8
+  // 
+  // 9 ticks takes it to step 1 (index 2)
+  SequencerEditor cursor{&seqr};
+  seqr.setSequenceLength(0, 8);
+  seqr.setSequenceLength(1, 8);
+  
+  for (int i=0;i<10;++i) seqr.tick();
+
+  std::string want = "1 -IoOoo\n2 -ooOoo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testFollowEditCursorRight()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.moveCursorRight();
+  std::string want = "1  Ioooo\n2  ooooo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testFollowEditCursorDown()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.moveCursorDown();
+  std::string want = "2 -Ioooo\n3 -Ooooo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testFollowEditCursorLeftLimit()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.moveCursorLeft();
+  std::string want = "1 -Ioooo\n2 -Ooooo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testFollowEditCursorRightLimit()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  for (int i=0; i < 20; ++i) cursor.moveCursorRight();
+  std::string want = "1  I    \n2  o    ";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+bool testFollowEditCursorRightLimitNearly()
+{
+  Sequencer seqr{4, 4};
+  SequencerEditor cursor{&seqr};
+  for (int i=0; i < 2; ++i) cursor.moveCursorRight();
+  std::string want = "1  Io   \n2  oo   ";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
+
+
 void log(std::string test, bool res)
 {
   std::string msg;
@@ -130,12 +277,13 @@ int main()
   // log("testCursorLeftLimit", testCursorLeftLimit());
   // log("testCursorRight", testCursorRight());
   // log("testCursorRightLimit", testCursorRightLimit());
-  
-  SimpleClock clock;
-  clock.start(1000);
-  std::string s;
-  std::cout << "Enter something " << std::endl;
-  std::cin >> s;
-  clock.stop();
-
+  // log("testTwoLinesInit", testTwoLinesInit());
+  // log("testTwoLines16", testTwoLines16());
+  // log("testTwoLines16Tick", testTwoLines16());
+  // log("testTwoLinesWrapSeq", testTwoLinesWrapSeq());
+//  log("testFollowEditCursorRight", testFollowEditCursorRight());
+//  log("testFollowEditCursorDown", testFollowEditCursorDown());
+  //log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
+log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
+log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 }
