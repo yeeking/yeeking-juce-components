@@ -3,12 +3,12 @@
 
 #include "Sequencer.h"
 #include "grovepi.h"
-
+#include "grove_rgb_lcd.h"
 /** utilities to make use of the Grove LCD RGB widget */
-class GroveLCD{
-    public:
+// class GroveLCD{
+//     public:
 
-};
+// };
 
 /** used to transmit joystick states*/
 enum class JoystickEvent{up, down, left, right, click};
@@ -20,7 +20,7 @@ enum class JoystickEvent{up, down, left, right, click};
 class GroveJoystick
 {
     public:
-    GroveJoystick(int _pinX=0, int _pinY=1, std::function<void(JoystickEvent)> callback = [](JoystickEvent e){printf("%d", e)}) : callback{callback}, pinX{_pinX}, pinY{_pinY}   
+    GroveJoystick(std::function<void(JoystickEvent)> callback = [](JoystickEvent e){printf("%d", e);}, int _pinX=0, int _pinY=1) : callback{callback}, pinX{_pinX}, pinY{_pinY}   
     {
         try
         {
@@ -116,7 +116,35 @@ int main()
 {
     Sequencer seqr;
     SequencerEditor seqEditor{&seqr};
-    GroveJoystick joy([&seqEditor](JoystickEvent event){
+    SimpleClock clock{};
+    GrovePi::LCD lcd{};
+
+    clock.setCallback([&seqr, &lcd, &seqEditor](){
+        seqr.tick();
+            std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
+            std::cout << disp << std::endl;
+            lcd.setText(disp.c_str());
+        });
+    clock.start(1000);
+ 
+    
+    try
+	{
+		// connect to the i2c-line
+		lcd.connect();
+		// set text and RGB color on the LCD
+		lcd.setText("Loading sequencer....");
+		lcd.setRGB(255, 0, 0);
+    }
+    catch(GrovePi::I2CError &error)
+	{
+		printf(error.detail());
+		return -1;
+	}
+
+
+
+    GroveJoystick joy([&seqEditor, &seqr, &lcd](JoystickEvent event){
         switch (event)
         {
             case JoystickEvent::up:
@@ -139,7 +167,13 @@ int main()
                 std::cout << "Received jpystick event click " << std::endl;
                 break;   
         }
+        // now update the display
+        std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
+        std::cout << disp << std::endl;
+        lcd.setText(disp.c_str());
+		
     });
+
     int x;
     std::cin >> x;
 }

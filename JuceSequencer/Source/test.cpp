@@ -255,6 +255,22 @@ bool testFollowEditCursorRightLimitNearly()
   else return true;
 }
 
+bool testFollowEditCursorDownLimit()
+{
+  Sequencer seqr{4}; // 4 seqs
+  SequencerEditor cursor{&seqr};
+  for (int i=0; i<10; ++i) cursor.moveCursorDown();
+
+  std::string want = "2 -Ioooo\n3 -Ooooo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (want != got) 
+  {
+    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  else return true;
+}
 
 void log(std::string test, bool res)
 {
@@ -284,6 +300,11 @@ int main()
 //  log("testFollowEditCursorRight", testFollowEditCursorRight());
 //  log("testFollowEditCursorDown", testFollowEditCursorDown());
   //log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
-log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
-log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
+//log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
+//log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
+
+
+log("testFollowEditCursorDownLimit", testFollowEditCursorDownLimit());
+  
+
 }
