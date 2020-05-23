@@ -1,5 +1,6 @@
 #include "Sequencer.h"
 #include <iostream>
+#include "PiRtMidi.h"
 
 bool testTick()
 {
@@ -303,8 +304,12 @@ int main()
 //log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
 //log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 
+PiRtMidi rtmidi;
+rtmidi.chooseMidiPort();
+rtmidi.playNote(0, 64, 64, 500);
+//rtmidi.playNote(0, 64, 64, 500);
 
-log("testFollowEditCursorDownLimit", testFollowEditCursorDownLimit());
+//log("testFollowEditCursorDownLimit", testFollowEditCursorDownLimit());
   
 
 }

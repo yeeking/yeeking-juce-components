@@ -8,95 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
-#include <thread>
-#include <chrono>
 #include <functional>
-
-class SimpleClock 
-{
-
-  public:
-    SimpleClock(int sleepTimeMs = 5, 
-                std::function<void()>callback = [](){
-                    std::cout << "SimpleClock::default tick callback" << std::endl;
-                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}
-     {
-       // constructor body
-     }
-
-    ~SimpleClock()
-    {
-      stop();
-      delete tickThread;
-    }
-    /** start with the sent interval between calls the to callback*/
-    void start(int intervalMs)
-    {
-      stop();
-      running = true;
-      tickThread = new std::thread(SimpleClock::ticker, this, intervalMs, sleepTimeMs);
-    }
-
-    void stop()
-    {
-      if (running)
-      {
-       //t << "SimpleClock::stop shutting down " << std::endl;
-        running = false; 
-        tickThread->join(); 
-        delete tickThread;
-      }
-    }
-    /** set the function to be called when the click ticks */
-    void setCallback(std::function<void()> c){
-      callback = c;
-    }
-    void tick()
-    {
-      // call the callback
-      //std::cout << "SimpleClock::tick" << std::endl; 
-      callback();     
-    }
-
- static void ticker(SimpleClock* clock, long intervalMs, long sleepTimeMs)
-    {
-      long nowMs = 0;
-      long elapsedMs = 0;
-      long startTimeMs = SimpleClock::getNow();
-      long remainingMs;
-      while(clock->running)
-      {
-        nowMs = SimpleClock::getNow();
-        elapsedMs = nowMs - startTimeMs;
-        if (elapsedMs >= intervalMs) // time to tick
-        { 
-          // move the start time along
-          startTimeMs = nowMs;
-          //std::cout << "SimpleClock::ticker elapsed time  " << elapsedMs << " of " << intervalMs << std::endl;
-          clock->tick();
-        }
-        else {
-          // sleep - but how much?
-          remainingMs = intervalMs - elapsedMs;
-          if (remainingMs > sleepTimeMs) // sleep as much as possible
-            std::this_thread::sleep_for(std::chrono::milliseconds(remainingMs - sleepTimeMs));
-          else
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTimeMs));
-        }
-      }
-    }
-    
-  private:
-    static long getNow()
-    {
-      return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    }
-    long intervalMs;
-    long sleepTimeMs; // lower means more precision in the timing
-    bool running;     
-    std::thread* tickThread;
-    std::function<void()> callback;
-};
 
 
 class Step{
@@ -117,8 +29,17 @@ class Step{
     {
       this->data = data; 
     }
+    void setCallback(std::function<void(std::vector<float>)> callback)
+    {
+      this->stepCallback = callback;
+    }
+    void trigger() const
+    {
+      stepCallback(data);
+    }
   private: 
     std::vector<float> data;
+    std::function<void(std::vector<float>)> stepCallback;
 };
 
 
@@ -128,7 +49,11 @@ class Sequence{
     {
       for (auto i=0;i<seqLength;i++)
       {
-        steps.push_back(Step{});
+        Step s;
+        s.setCallback([i](std::vector<float> data){
+          std::cout << "step " << i << " triggered " << std::endl;
+        });
+        steps.push_back(s);
       }
       
     }
@@ -136,6 +61,7 @@ class Sequence{
     void tick()
     {
       currentStep = (++currentStep) % currentLength;
+      steps[currentStep].trigger();
     }
     unsigned int getCurrentStep() const
     {
@@ -175,7 +101,11 @@ class Sequence{
     {
       steps[step].setData(data);
     }
-
+    void setStepCallback(unsigned int step, 
+                      std::function<void (std::vector<float>)> callback)
+    {
+      steps[step].setCallback(callback);
+    }
     std::string stepToString(int step) const
     {
       std::vector<float> data = getStepData(step);
@@ -222,7 +152,7 @@ class Sequencer  {
       /** move the sequencer along by one tick */
       void tick()
       {
-        std::cout << "Sequencer.h: tick" << std::endl;
+        //std::cout << "Sequencer.h: tick" << std::endl;
         for (Sequence& seq : sequences)
         {
             seq.tick();
@@ -232,6 +162,20 @@ class Sequencer  {
       void setSequenceLength(unsigned int sequence, unsigned int length)
       {
         sequences[sequence].setLength(length);
+      }
+      /** set a callback for all steps in a sequence*/
+      void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<float>)> callback)
+      {
+        for (int step = 0; step<sequences[sequence].howManySteps(); ++step)
+        {
+          sequences[sequence].setStepCallback(step, callback);
+        }
+      }
+
+      /** set a lambda to call when a particular step in a particular sequence happens */
+      void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<float>)> callback)
+      {
+         sequences[sequence].setStepCallback(step, callback); 
       }
 
       /** update the data stored at a step in the sequencer */
@@ -284,14 +228,16 @@ class Sequencer  {
     {
       if (sequence >= sequences.size() || sequence < 0)
         {
-          std::cout << "Sequence " << sequence << " out of range. use 0 - " << (sequences.size()-1) << std::endl;
+          //std::cout << "Sequence " << sequence << " out of range. use 0 - " << (sequences.size()-1) << std::endl;
           return false;
         } 
       return true;
     }
 
     /// class data members  
-      std::vector<Sequence> sequences;
+
+    std::vector<Sequence> sequences;
+
 };
 
 /** Represents an editor for a sequencer, which allows stateful edit operations to be applied 
@@ -402,7 +348,12 @@ class SequencerViewer{
       // we display the bit of the sequences
       // that the editor is looking at
       int seqOffset = editor->getCurrentSequence();
-      int stepOffset = editor->getCurrentStep();
+      int stepOffset = 0;//editor->getCurrentStep();
+
+      if (editor->getCurrentStep() > cols - 4)
+      {
+        stepOffset = editor->getCurrentStep();
+      }
       int displaySeq, displayStep;
       for (int seq=0;seq<rows;++seq)
       {
@@ -422,11 +373,11 @@ class SequencerViewer{
           
           // three choices, in order of priority as two can be true:
           // I : the editor is at this step
-          // O : the sequencer is at this step 
+          // - : the sequencer is at this step 
           // o : neither the editor or sequencer are at step
           //   : gone past the end of the sequence
           char state{'o'};// default
-          if (sequencer->getCurrentStep(displaySeq) == displayStep) state = 'O';
+          if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
           if (editor->getCurrentSequence() == displaySeq &&
               editor->getCurrentStep() == displayStep)  state = 'I';          
           if (sequencer->howManySteps(displaySeq) <= displayStep) state = ' ';
