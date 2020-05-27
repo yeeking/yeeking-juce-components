@@ -1,6 +1,6 @@
 #include "Sequencer.h"
 #include <iostream>
-#include "PiRtMidi.h"
+#include "RtMidiUtils.h"
 
 bool testTick()
 {
